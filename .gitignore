@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Node (web/, sync/)
+node_modules/
+.next/
+dist/
+
+# Secrets and personal settings
+.env
+.env.*
+!.env.example
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Setup and publish logs
+setup-log.txt
+publish-log.txt
+
+# OS
+.DS_Store

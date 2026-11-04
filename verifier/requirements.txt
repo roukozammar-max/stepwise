@@ -1,0 +1,6 @@
+sympy==1.14.0
+antlr4-python3-runtime==4.11  # exact version SymPy's LaTeX parser needs
+fastapi==0.162.0
+uvicorn==0.54.0
+pytest==9.1.1
+httpx2==2.16.0                # used by FastAPI's TestClient in the tests
