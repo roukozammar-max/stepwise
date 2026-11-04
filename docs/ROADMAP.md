@@ -1,22 +1,22 @@
 # Stepwise roadmap
 
 Each checkbox is sized for one Claude Code session and one GitHub issue.
-Tick tasks as they're done. Current phase: **0**.
+Tick tasks as they're done. Current phase: **1**.
 
 ## Phase 0: Foundations (week 1)
 
-- [ ] Run the verifier locally (`verifier/README.md`) and see tests + eval pass
-- [ ] Have Claude walk you through `verifier.py`, then make one small change yourself
-- [ ] Push to GitHub and see CI go green
+- [x] Run the verifier locally (`verifier/README.md`) and see tests + eval pass
+- [x] Have Claude walk you through `verifier.py`, then make one small change yourself
+- [x] Push to GitHub and see CI go green
 - [ ] Add 20+ eval cases from your own worksheets with `/add-eval-cases`
-- [ ] Fix or document anything the new cases break (every fix gets a test)
+- [x] Fix or document anything the new cases break (every fix gets a test)
 
 Done when: the eval has 66+ steps, CI is green, and you can explain what
 happens inside `check_step` from start to finish.
 
 ## Phase 1: Single-player web app (weeks 2–3)
 
-- [ ] Write the spec: have Claude interview you, then save `docs/SPEC-phase1.md`
+- [x] Write the spec: have Claude interview you, then save `docs/SPEC-phase1.md`
 - [ ] Scaffold `web/`: Next.js, TypeScript, Tailwind
 - [ ] Board page: an ordered list of lines you can add, edit and delete
 - [ ] Maths input with MathLive, display with KaTeX
@@ -25,6 +25,8 @@ happens inside `check_step` from start to finish.
 - [ ] Dockerfile for `verifier/`; deploy the API (Fly.io, Railway or Render)
 - [ ] Deploy `web/` on Vercel with the API URL as an environment variable
 - [ ] Root README: live link and a screenshot or GIF
+- [ ] Drag to reorder lines
+- [ ] Undo/redo across lines
 
 Done when: you use it from the live URL for your own homework.
 
