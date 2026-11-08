@@ -17,7 +17,7 @@ happens inside `check_step` from start to finish.
 ## Phase 1: Single-player web app (weeks 2–3)
 
 - [x] Write the spec: have Claude interview you, then save `docs/SPEC-phase1.md`
-- [ ] Scaffold `web/`: Next.js, TypeScript, Tailwind
+- [x] Scaffold `web/`: Next.js, TypeScript, Tailwind
 - [ ] Board page: an ordered list of lines you can add, edit and delete
 - [ ] Maths input with MathLive, display with KaTeX
 - [ ] Call `/verify` after typing pauses; show ✅/❌/❓, the message and the counterexample on each line

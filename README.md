@@ -21,7 +21,7 @@ x = 2                    ❌ This step lost x = -2.
 | Part | Folder | Status |
 |---|---|---|
 | Step verifier (SymPy) + API | `verifier/` | Working: 20 tests, 46-step eval, 0 false accepts |
-| Web app (Next.js) | `web/` | Phase 1, not started |
+| Web app (Next.js) | `web/` | Phase 1, scaffolded (Next.js 16, TypeScript, Tailwind) |
 | Real-time sync (Yjs + Hocuspocus) | `sync/` | Phase 2, not started |
 | AI hints | `verifier/` or `hints/` | Phase 3, not started |
 
