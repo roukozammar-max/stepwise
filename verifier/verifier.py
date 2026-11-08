@@ -25,9 +25,11 @@ SymPy's simplify() can occasionally run for a very long time.
 from __future__ import annotations
 
 import multiprocessing as mp
+import os
 import random
 import re
-from dataclasses import asdict, dataclass
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass, replace
 from functools import lru_cache
 from typing import Any, Callable, Optional
 
@@ -441,18 +443,30 @@ def run_with_timeout(fn: Callable, args: tuple = (), timeout: float = DEFAULT_TI
 # --------------------------------------------------------------------------
 
 @lru_cache(maxsize=4096)
+def _check_pair(prev: str, curr: str, timeout: float) -> StepResult:
+    """Check one step, cached by the two lines only (not their position), so
+    inserting or deleting a line elsewhere doesn't force a re-check."""
+    status, value = run_with_timeout(_check_step_dict, (prev, curr, 0), timeout)
+    if status == "ok":
+        return StepResult(**value)
+    if status == "timeout":
+        return StepResult(0, "unknown", "timeout",
+                          f"Gave up after {timeout:g}s: this step is too complex "
+                          f"to check automatically.")
+    return StepResult(0, "unknown", "error", "Something went wrong checking this step.")
+
+
 def check_step(prev: str, curr: str, index: int = 1,
                timeout: float = DEFAULT_TIMEOUT) -> StepResult:
     """Check one step. Results are cached, so re-checking a board after one
     line changes only recomputes the steps touching that line."""
-    status, value = run_with_timeout(_check_step_dict, (prev, curr, index), timeout)
-    if status == "ok":
-        return StepResult(**value)
-    if status == "timeout":
-        return StepResult(index, "unknown", "timeout",
-                          f"Gave up after {timeout:g}s: this step is too complex "
-                          f"to check automatically.")
-    return StepResult(index, "unknown", "error", "Something went wrong checking this step.")
+    return replace(_check_pair(prev, curr, timeout), line=index)
+
+
+# How many steps of one derivation are checked at the same time. Each check
+# runs in its own process, so this mostly helps on Windows, where starting a
+# worker takes ~1 s. Lower it on small servers (e.g. 2 on a 512 MB free tier).
+MAX_PARALLEL_CHECKS = max(1, int(os.environ.get("STEPWISE_PARALLEL_CHECKS", "4")))
 
 
 def check_derivation(lines: list[str], timeout: float = DEFAULT_TIMEOUT) -> list[StepResult]:
@@ -464,10 +478,13 @@ def check_derivation(lines: list[str], timeout: float = DEFAULT_TIMEOUT) -> list
         first = StepResult(0, "start", "", "Starting point.")
     except Exception:
         first = StepResult(0, "unknown", "parse", "Couldn't read this line. Check the LaTeX.")
-    results = [first]
-    for i in range(1, len(lines)):
-        results.append(check_step(lines[i - 1], lines[i], i, timeout))
-    return results
+    steps = [(lines[i - 1], lines[i], i) for i in range(1, len(lines))]
+    workers = min(MAX_PARALLEL_CHECKS, len(steps))
+    if workers <= 1:
+        return [first] + [check_step(p, c, i, timeout) for p, c, i in steps]
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        # pool.map keeps the results in the same order as the steps
+        return [first] + list(pool.map(lambda s: check_step(*s, timeout=timeout), steps))
 
 
 _INLINE_MATH = re.compile(r"\$\$(.+?)\$\$|\$(.+?)\$|\\\((.+?)\\\)", re.S)

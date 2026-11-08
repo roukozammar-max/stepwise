@@ -16,8 +16,9 @@ dist/
 CLAUDE.local.md
 .claude/settings.local.json
 
-# Setup and publish logs
+# Setup, start and publish logs
 setup-log.txt
+start-log.txt
 publish-log.txt
 
 # OS

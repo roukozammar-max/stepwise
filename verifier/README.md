@@ -96,10 +96,21 @@ Anything it can't decide is ❓ with a reason, never a guess.
   warmed up SymPy (`verifier_warmup.py`). The first check in a fresh process
   costs ~0.5 s; from a warm worker it's ~20–100 ms. `start_workers()` pays the
   one-time boot (~1 s) when the API starts.
-- **Cache**: results are cached per (previous line, line), so editing line 7 of
-  a board only re-checks steps 7 and 8.
+- **Cache**: results are cached per (previous line, line), not by position, so
+  editing line 7 of a board only re-checks steps 7 and 8, and inserting a line
+  only re-checks the two steps around it.
+- **Parallel steps**: the steps of one derivation are checked at the same time
+  (`STEPWISE_PARALLEL_CHECKS`, default 4). On Windows this halves the time for
+  a fresh 5-line board. Use 2 on a 512 MB free server.
 - Any script that uses the verifier needs the `if __name__ == "__main__":`
   guard, because the workers re-import the main script.
+
+## Settings (environment variables)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `ALLOWED_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Web pages allowed to call the API from a browser (CORS), comma-separated. Add the Vercel URL in production. |
+| `STEPWISE_PARALLEL_CHECKS` | `4` | How many steps of one board are checked at once. |
 
 ## The eval, and why false-accepts are the number that matters
 

@@ -20,6 +20,18 @@ A verifier change is done only when the tests and the eval both pass.
 Show the output, don't just say it passed. On Windows each check takes ~1 s,
 so the eval takes about a minute; that's expected, not a bug.
 
+Web app, run from `web/` (Next.js 16: read `web/AGENTS.md` before writing
+Next.js code, this version differs from older docs):
+
+- Install: `npm ci`
+- Dev server: `npm run dev` (http://localhost:3000; needs the API running)
+- Checks: `npm run lint && npm run typecheck && npm test && npm run build`
+- Start everything at once from the repo root: `python tools/start_web.py`
+  (Windows: `start-stepwise.bat`); it logs to `start-log.txt`.
+
+A web change is done only when all four web checks pass and you've tried
+the change in the browser.
+
 ## Verifier rules
 
 - A wrong step marked "correct" (a false accept) is the worst bug in this
@@ -37,8 +49,12 @@ so the eval takes about a minute; that's expected, not a bug.
 
 ## Conventions
 
-- Planned folders: `web/` (Next.js app, Phase 1), `sync/` (Hocuspocus
-  server, Phase 2). Create them when their phase starts.
+- Folders: `verifier/` (Python checker + API), `web/` (Next.js app),
+  `tools/` (setup/start/publish scripts), `docs/` (roadmap and specs).
+  `sync/` (Hocuspocus server) is created in Phase 2.
+- Web app rules: verdicts are keyed by (previous line, line), see
+  `web/lib/verify.ts`; keep that, it's what makes late answers harmless.
+  Keep `lib/` free of React so it stays unit-testable.
 - Commit messages: short, imperative ("Add solution-set check for quadratics").
 - When a roadmap task is finished, tick it in `docs/ROADMAP.md` and update
   "Key numbers" in the root README if they changed.

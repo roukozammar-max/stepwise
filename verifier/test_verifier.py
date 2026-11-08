@@ -115,6 +115,20 @@ def test_numeric_answer_leak():
     assert not hint_reveals_answer(r"What do you get if you divide both sides by $2$?", r"x = 7")
 
 
+def test_derivation_checked_in_parallel_keeps_order():
+    lines = [r"(x+1)^2", r"x^2 + 2x + 1", r"x^2 + 2x", r"x(x+2)", r"x^2 + 2x + 1"]
+    results = check_derivation(lines)
+    assert [r.line for r in results] == [0, 1, 2, 3, 4]
+    assert [r.status for r in results] == ["start", "correct", "incorrect", "correct", "incorrect"]
+
+
+def test_cache_does_not_mix_up_line_numbers():
+    first = check_step(r"2x = 4", r"x = 2", 1)
+    moved = check_step(r"2x = 4", r"x = 2", 7)   # same step, further down the board
+    assert (first.line, moved.line) == (1, 7)
+    assert first.status == moved.status == "correct"
+
+
 # --- API -------------------------------------------------------------------
 
 def test_api():
@@ -128,3 +142,15 @@ def test_api():
         assert leak == {"reveals_answer": True}
 
         assert client.post("/verify", json={"lines": []}).status_code == 422
+
+
+def test_api_allows_the_web_app_origin_only():
+    preflight = {"Access-Control-Request-Method": "POST",
+                 "Access-Control-Request-Headers": "content-type"}
+    with TestClient(app) as client:
+        ok = client.options("/verify", headers={"Origin": "http://localhost:3000", **preflight})
+        assert ok.status_code == 200
+        assert ok.headers["access-control-allow-origin"] == "http://localhost:3000"
+
+        other = client.options("/verify", headers={"Origin": "https://evil.example", **preflight})
+        assert "access-control-allow-origin" not in other.headers

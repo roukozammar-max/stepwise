@@ -1,6 +1,7 @@
 # Phase 1 spec: single-player web app
 
-Status: agreed 2026-11-04. Roadmap: `docs/ROADMAP.md`, Phase 1.
+Status: agreed 2026-11-04. Tasks 1–5 built 2026-11-08 (see "Implementation
+notes" at the end). Roadmap: `docs/ROADMAP.md`, Phase 1.
 
 ## Goal
 
@@ -211,3 +212,28 @@ Matches `docs/ROADMAP.md` Phase 1:
 8. Root README: live link and a screenshot or GIF.
 9. Drag to reorder lines.
 10. Undo/redo.
+
+## Implementation notes (2026-11-08)
+
+Tasks 1–5 are done. What differs from the plan above, and why:
+
+- **Steps are checked in parallel on the server** (`STEPWISE_PARALLEL_CHECKS`,
+  default 4), and the server cache is keyed by (previous line, line) instead
+  of including the position. On Windows a fresh 5-line board went from
+  ~3.1 s to ~1.6 s, and inserting a line no longer re-checks every step
+  below it. Not in the original plan; no change to how steps are judged.
+- **No LaTeX clean-up layer.** The compatibility check from "Risks" found
+  nothing to fix: all 73 eval expressions round-trip through MathLive
+  unchanged, the checker gives the same verdict on MathLive's versions for
+  46/46 eval steps, and typed brackets (`\left( \right)`) parse fine.
+- **MathLive reports changes slightly after each keystroke.** The field
+  sends its final value when it closes (Enter, arrows, blur), otherwise fast
+  typing followed by Enter lost the last characters (found by the browser
+  tests).
+- **The "slow" banner says "Still checking…"** rather than "Waking up the
+  checker", because on Windows a large board can take a few seconds even
+  when the checker is awake.
+
+Acceptance checks 1–10 pass locally in a real browser (Chromium via
+Playwright; check 7 with a simulated 4.5 s delay), plus keyboard navigation
+and phone width. They need re-running on the live URL after tasks 6–7.

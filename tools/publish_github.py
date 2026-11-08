@@ -18,13 +18,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 LOG = ROOT / "publish-log.txt"
-COMMIT_MESSAGE = (
-    "Start Stepwise: step verifier, eval set, CI\n\n"
-    "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n"
-    "Claude-Session: https://claude.ai/code/session_01R7FGtFq6dqhdMHSe5KTj7g\n"
-)
-UPDATE_MESSAGE = (
-    "Update Stepwise\n\n"
+FIRST_TITLE = "Start Stepwise: step verifier, eval set, CI"
+DEFAULT_TITLE = "Update Stepwise"
+TRAILER = (
     "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n"
     "Claude-Session: https://claude.ai/code/session_01R7FGtFq6dqhdMHSe5KTj7g\n"
 )
@@ -108,6 +104,24 @@ def ensure_identity(git: Git, name: str | None, email: str | None) -> None:
     log(f"identity set for this repo: {name} <{email}>\n")
 
 
+def describe_changes(git: Git) -> str:
+    """Show what changed and ask for a short description (the commit title)."""
+    changed = git.value("status", "--short").splitlines()
+    say(f"      {len(changed)} file(s) changed since the last save:")
+    for line in changed[:12]:
+        say(f"        {line}")
+    if len(changed) > 12:
+        say(f"        ... and {len(changed) - 12} more")
+    if not sys.stdin.isatty():
+        return DEFAULT_TITLE
+    try:
+        text = input("      Describe this change in a few words (or press Enter to skip): ").strip()
+    except EOFError:
+        text = ""
+    log(f"description -> {text!r}\n")
+    return text[:72] if text else DEFAULT_TITLE
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Upload Stepwise to GitHub.")
     parser.add_argument("remote_url", help="e.g. https://github.com/<you>/stepwise.git")
@@ -147,8 +161,9 @@ def main() -> int:
         files = git.value("ls-files").splitlines()
         if git.run("diff", "--cached", "--quiet", check=False).returncode != 0:
             first = git.run("rev-parse", "--verify", "HEAD", check=False).returncode != 0
-            git.run("commit", "-m", COMMIT_MESSAGE if first else UPDATE_MESSAGE)
-            say(f"      Saved {len(files)} files.")
+            title = FIRST_TITLE if first else describe_changes(git)
+            git.run("commit", "-m", f"{title}\n\n{TRAILER}")
+            say(f"      Saved: \"{title}\" ({len(files)} files in the project).")
         else:
             say("      Nothing changed since the last save.")
         git.run("branch", "-M", "main")

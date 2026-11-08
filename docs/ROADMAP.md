@@ -18,10 +18,10 @@ happens inside `check_step` from start to finish.
 
 - [x] Write the spec: have Claude interview you, then save `docs/SPEC-phase1.md`
 - [x] Scaffold `web/`: Next.js, TypeScript, Tailwind
-- [ ] Board page: an ordered list of lines you can add, edit and delete
-- [ ] Maths input with MathLive, display with KaTeX
-- [ ] Call `/verify` after typing pauses; show ✅/❌/❓, the message and the counterexample on each line
-- [ ] Allow the web app's origin in the API (CORS)
+- [x] Board page: an ordered list of lines you can add, edit and delete
+- [x] Maths input with MathLive, display with KaTeX
+- [x] Call `/verify` after typing pauses; show ✅/❌/❓, the message and the counterexample on each line
+- [x] Allow the web app's origin in the API (CORS)
 - [ ] Dockerfile for `verifier/`; deploy the API (Fly.io, Railway or Render)
 - [ ] Deploy `web/` on Vercel with the API URL as an environment variable
 - [ ] Root README: live link and a screenshot or GIF

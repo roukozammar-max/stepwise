@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stepwise web app
 
-## Getting Started
+The board: type a derivation line by line, and each step is checked by the
+verifier API as you go. Spec: [`docs/SPEC-phase1.md`](../docs/SPEC-phase1.md).
 
-First, run the development server:
+## Run it
+
+From the repo root on Windows, double-click `start-stepwise.bat`. By hand:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci          # install libraries (also copies MathLive's fonts into public/)
+npm run dev     # http://localhost:3000, needs the API on http://127.0.0.1:8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The API address comes from `NEXT_PUBLIC_API_URL` (see `.env.example`); it
+defaults to `http://127.0.0.1:8000`. The API must allow this page's address
+in `ALLOWED_ORIGINS` (it allows localhost:3000 by default).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Checks before committing:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint && npm run typecheck && npm test && npm run build
+```
 
-## Learn More
+## How it fits together
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/page.tsx             server page, renders BoardLoader
+components/
+  BoardLoader.tsx        loads Board in the browser only (it needs localStorage)
+  Board.tsx              the page: lines, editing, saving, banners
+  BoardLine.tsx          one line: number, maths, delete button, status, message
+  MathInput.tsx          MathLive field for the line being edited
+  MathView.tsx           KaTeX rendering for the other lines
+  StatusBadge.tsx        ✓ ✗ ? and the "checking" spinner
+lib/
+  board.ts               lines, editing actions (a reducer), saving to localStorage
+  verify.ts              API calls, matching answers back to lines
+  useChecker.ts          when to check: typing pause, Enter, newest answer wins
+  *.test.ts              unit tests (Vitest)
+scripts/copy-mathlive-assets.mjs   copies MathLive's fonts to public/mathlive/fonts
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Design decisions worth knowing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **A verdict belongs to a pair of lines.** Whether line 3 is right depends on
+  line 2 and line 3. Each verdict is stored with a key made of both lines and
+  only shown while both are unchanged. So an edit instantly marks the two
+  affected lines as "checking", and an old answer arriving late can never
+  show the wrong verdict.
+- **The whole board is sent each time.** The API caches each (previous line,
+  line) pair, so unchanged steps cost nothing. Simpler than tracking diffs.
+- **Only the newest answer counts.** Each request gets an increasing number;
+  an older answer that arrives after a newer one is ignored.
+- **Empty lines are skipped**, so a step compares a line with the previous
+  non-empty line, exactly like the API.
+- **MathLive for the line being edited, KaTeX for the rest**: one live editor
+  instead of 50 keeps the page fast. MathLive reports changes slightly after
+  each keystroke, so the field sends its final value when it closes (Enter,
+  arrows, clicking away); otherwise fast typing could be lost.
+- **MathLive's LaTeX works with the checker as is.** All 73 expressions from
+  the eval set come out of MathLive unchanged, and typed brackets become
+  `\left( \right)`, which the parser reads fine. No clean-up layer needed.
+- **Saved in the browser** under `stepwise.board.v1`; verdicts aren't saved,
+  the board is re-checked on load.
 
-## Deploy on Vercel
+## Tested
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 13 unit tests (`npm test`) for the board actions, saving and answer matching.
+- The spec's acceptance checks 1 to 10 were run in a real browser (Chromium,
+  via Playwright), plus keyboard navigation and phone width: all passing.
+  Check 11 (use it for real homework) is yours.

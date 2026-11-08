@@ -9,15 +9,26 @@ Endpoints:
 """
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from verifier import check_derivation, hint_reveals_answer, start_workers
 
 MAX_LINES = 50
 MAX_LINE_LENGTH = 500
+
+# Web pages allowed to call this API from a browser (CORS). Set ALLOWED_ORIGINS
+# to a comma-separated list, e.g. "https://stepwise.vercel.app" in production.
+DEFAULT_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+ALLOWED_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in os.environ.get("ALLOWED_ORIGINS", DEFAULT_ORIGINS).split(",")
+    if origin.strip()
+]
 
 
 @asynccontextmanager
@@ -27,6 +38,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Stepwise verifier", version="0.1.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 
 class VerifyRequest(BaseModel):
